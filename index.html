@@ -1,0 +1,1259 @@
+```html
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>白堊紀恐龍探險隊 - 同花順化石大挖掘</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Montserrat, Noto Sans TC -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Noto+Sans+TC:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti for Celebration -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Tone.js for Web Audio synthesis (No external URLs needed) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+
+    <style>
+        /* 恐龍遠古雨林探險色調 */
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #04120b;
+            color: #ecfdf5;
+            overflow-x: hidden;
+            touch-action: manipulation;
+        }
+
+        .font-dino {
+            font-family: 'Montserrat', 'Noto Sans TC', sans-serif;
+        }
+
+        .font-num {
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        /* 探險隊高科技全息琥珀面板 */
+        .glass-panel {
+            background: rgba(6, 26, 18, 0.88);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid rgba(52, 211, 153, 0.28);
+            box-shadow: 0 8px 32px 0 rgba(2, 10, 7, 0.7);
+        }
+
+        /* 四宮格卡牌自適應樣式 */
+        .magic-card {
+            aspect-ratio: 5 / 7;
+            transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+            user-select: none;
+            min-width: 0;
+            position: relative;
+        }
+
+        .magic-card.active {
+            box-shadow: 0 2px 10px rgba(52, 211, 153, 0.45);
+            border-color: rgba(110, 231, 183, 0.95);
+            transform: translateY(-1px);
+        }
+
+        .magic-card.active:hover {
+            transform: translateY(-3px) scale(1.15);
+            box-shadow: 0 6px 18px rgba(251, 191, 36, 0.75);
+            z-index: 20;
+        }
+
+        .magic-card.uncollected {
+            opacity: 0.24;
+            background: rgba(5, 36, 24, 0.65);
+            border: 1px dashed rgba(52, 211, 153, 0.35);
+            filter: grayscale(0.85);
+        }
+
+        /* 四宮格內 13 張牌排列：手機雙排（7 欄），電腦單排（13 欄） */
+        .card-grid-suit {
+            display: grid;
+            grid-template-columns: repeat(7, minmax(0, 1fr));
+            gap: 2.5px;
+        }
+        @media (min-width: 1024px) {
+            .card-grid-suit {
+                grid-template-columns: repeat(13, minmax(0, 1fr));
+                gap: 3.5px;
+            }
+        }
+
+        /* 卡牌立體翻轉容器 */
+        .perspective-container {
+            perspective: 1000px;
+        }
+
+        .card-flip-inner {
+            transition: transform 0.65s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform-style: preserve-3d;
+        }
+
+        .flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+
+        .card-back {
+            transform: rotateY(0deg);
+        }
+
+        .card-front {
+            transform: rotateY(180deg);
+        }
+
+        /* 花色按鈕被選中時的高亮邊框 */
+        .selected-suit-active {
+            border-color: #fbbf24 !important;
+            background: linear-gradient(135deg, rgba(6, 78, 59, 0.95), rgba(16, 185, 129, 0.95)) !important;
+            box-shadow: 0 0 16px rgba(251, 191, 36, 0.65), inset 0 0 10px rgba(251, 191, 36, 0.3) !important;
+            transform: scale(1.03);
+        }
+
+        /* 鬼牌專屬金紅脈衝邊框 */
+        @keyframes jokerBorderPulse {
+            0%, 100% { border-color: rgba(251, 191, 36, 0.9); box-shadow: 0 0 12px rgba(251, 191, 36, 0.45); }
+            50% { border-color: rgba(239, 68, 68, 0.95); box-shadow: 0 0 20px rgba(239, 68, 68, 0.7); }
+        }
+        .joker-pulse {
+            animation: jokerBorderPulse 2s infinite ease-in-out;
+        }
+
+        /* 恐龍探險隊員階級徽章閃耀效果 */
+        @keyframes rankShine {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .rank-gradient {
+            background: linear-gradient(270deg, #10b981, #f59e0b, #06b6d4, #10b981);
+            background-size: 300% 300%;
+            animation: rankShine 5s ease infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen relative flex flex-col justify-between selection:bg-emerald-500 selection:text-white pb-6">
+
+    <!-- 背景叢林微粒地層畫布 -->
+    <canvas id="stardust-canvas" class="fixed inset-0 pointer-events-none z-0"></canvas>
+
+    <div class="relative z-10 max-w-5xl mx-auto px-2 sm:px-4 py-2 sm:py-4 w-full">
+
+        <!-- 頁面頂部：恐龍探險隊全景標題與雲端存檔狀態列 -->
+        <header class="flex flex-col sm:flex-row items-center justify-between gap-2 mb-3">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-xl bg-emerald-900/90 border border-emerald-400/50 flex items-center justify-center text-lg shadow-md">
+                    🦖
+                </div>
+                <div>
+                    <h1 class="text-sm sm:text-base font-dino font-black tracking-wide text-amber-300 flex items-center gap-1.5">
+                        <span>白堊紀恐龍探險隊</span>
+                        <span class="text-[10px] text-emerald-300 font-normal px-2 py-0.5 rounded-full bg-emerald-950 border border-emerald-500/40">同花順化石探勘任務</span>
+                    </h1>
+                </div>
+            </div>
+
+            <!-- 音效開關與隊員階級進度徽章 -->
+            <div class="flex items-center gap-2 flex-wrap justify-end">
+                <!-- 探險隊員階級 -->
+                <div class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-emerald-950/90 border border-emerald-500/40 text-[11px] text-emerald-200">
+                    <span>🎖️</span>
+                    <span>探險階級：</span>
+                    <span id="expedition-rank-badge" class="font-bold text-amber-300">初階實習隊員</span>
+                </div>
+
+                <!-- 雲端存檔狀態標籤 -->
+                <div id="storage-status-badge" class="text-[10px] text-amber-200 bg-amber-950/80 px-2 py-1 rounded-xl border border-amber-400/50">
+                    ✦ 探勘進度已連線
+                </div>
+
+                <!-- 探險音效開關 -->
+                <button id="btn-toggle-sound" class="p-1.5 rounded-xl bg-emerald-950 border border-emerald-500/40 text-emerald-300 hover:text-white transition flex items-center gap-1 text-xs" title="切換探險雷達音效">
+                    <span id="sound-icon">🔊</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- 最上方：恐龍化石圖鑑挖掘地圖（2x2 四宮格 + 頂部鬼牌展架） -->
+        <main class="glass-panel rounded-2xl p-2.5 sm:p-4 mb-3 sm:mb-4 shadow-2xl">
+            <!-- 全景標題與目標狀態列 -->
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-2 mb-2 border-b border-emerald-500/20 gap-2">
+                <div class="flex items-center gap-1.5 shrink-0">
+                    <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
+                    <h2 class="font-dino font-bold text-xs sm:text-base text-amber-100 flex items-center gap-1 tracking-wider">
+                        <span>恐龍圖鑑挖掘地圖</span>
+                        <span class="text-[10px] text-emerald-300/80 font-normal hidden sm:inline">（四花色 A 至 K）</span>
+                    </h2>
+                </div>
+
+                <div class="flex items-center gap-2 flex-wrap w-full sm:w-auto justify-between sm:justify-end">
+                    <!-- 鬼牌專屬頂部微型展架 -->
+                    <div class="flex items-center gap-1.5 bg-emerald-950/90 border border-amber-400/60 rounded-xl px-2.5 py-1 shrink-0" id="row-jokers">
+                        <span class="text-xs sm:text-sm">👑</span>
+                        <span class="text-[10px] sm:text-xs font-bold text-amber-200 whitespace-nowrap">鬼牌：</span>
+                        <span id="jokers-count-badge" class="text-[10px] sm:text-xs px-1.5 py-0.5 rounded bg-emerald-900/90 text-amber-300 font-mono font-bold whitespace-nowrap">0 / 2</span>
+                        <div class="flex gap-1 ml-1 items-center" id="jokers-slot-container">
+                            <!-- 火焰霸王龍與暗影迅猛龍卡槽動態放置此處 -->
+                        </div>
+                    </div>
+
+                    <!-- 目標進度標籤 -->
+                    <div class="flex items-center gap-1 bg-emerald-950/70 px-2.5 py-1 rounded-xl border border-emerald-400/40 text-[10px] sm:text-xs">
+                        <span class="text-amber-300 font-semibold leading-tight" id="goal-status">任一花色集齊 13 張即達成同花順！</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 四宮格 (手機與電腦皆為 2x2) -->
+            <div class="grid grid-cols-2 gap-2 sm:gap-3" id="suits-board">
+                
+                <!-- 1. 黑桃：暴龍 -->
+                <div class="suit-row bg-emerald-950/50 rounded-xl p-2 sm:p-2.5 border border-emerald-500/25 flex flex-col justify-between" id="row-spades">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <div class="flex items-center gap-1 truncate">
+                            <span class="text-sm sm:text-base text-emerald-300">♠</span>
+                            <span class="font-bold text-[11px] sm:text-xs text-emerald-100 truncate">黑桃（暴龍）</span>
+                            <span class="text-[9px] sm:text-[10px] px-1 py-0.2 rounded bg-emerald-900/70 text-emerald-300 count-badge font-mono shrink-0">0/13</span>
+                        </div>
+                        <div class="w-10 sm:w-16 bg-emerald-950 rounded-full h-1 sm:h-1.5 overflow-hidden border border-emerald-500/30 shrink-0 ml-1">
+                            <div class="suit-progress bg-gradient-to-r from-emerald-500 to-teal-400 h-full w-0 transition-all duration-500" data-suit="spades"></div>
+                        </div>
+                    </div>
+                    <div class="card-grid card-grid-suit" data-suit="spades"></div>
+                </div>
+
+                <!-- 2. 愛心：三角龍 -->
+                <div class="suit-row bg-emerald-950/50 rounded-xl p-2 sm:p-2.5 border border-emerald-500/25 flex flex-col justify-between" id="row-hearts">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <div class="flex items-center gap-1 truncate">
+                            <span class="text-sm sm:text-base text-rose-400">♥</span>
+                            <span class="font-bold text-[11px] sm:text-xs text-rose-200 truncate">愛心（三角龍）</span>
+                            <span class="text-[9px] sm:text-[10px] px-1 py-0.2 rounded bg-rose-950/80 text-rose-300 count-badge font-mono shrink-0">0/13</span>
+                        </div>
+                        <div class="w-10 sm:w-16 bg-emerald-950 rounded-full h-1 sm:h-1.5 overflow-hidden border border-emerald-500/30 shrink-0 ml-1">
+                            <div class="suit-progress bg-gradient-to-r from-rose-500 to-orange-400 h-full w-0 transition-all duration-500" data-suit="hearts"></div>
+                        </div>
+                    </div>
+                    <div class="card-grid card-grid-suit" data-suit="hearts"></div>
+                </div>
+
+                <!-- 3. 方塊：翼手龍 -->
+                <div class="suit-row bg-emerald-950/50 rounded-xl p-2 sm:p-2.5 border border-emerald-500/25 flex flex-col justify-between" id="row-diamonds">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <div class="flex items-center gap-1 truncate">
+                            <span class="text-sm sm:text-base text-amber-300">♦</span>
+                            <span class="font-bold text-[11px] sm:text-xs text-amber-100 truncate">方塊（翼手龍）</span>
+                            <span class="text-[9px] sm:text-[10px] px-1 py-0.2 rounded bg-amber-950/80 text-amber-300 count-badge font-mono shrink-0">0/13</span>
+                        </div>
+                        <div class="w-10 sm:w-16 bg-emerald-950 rounded-full h-1 sm:h-1.5 overflow-hidden border border-emerald-500/30 shrink-0 ml-1">
+                            <div class="suit-progress bg-gradient-to-r from-amber-500 to-yellow-300 h-full w-0 transition-all duration-500" data-suit="diamonds"></div>
+                        </div>
+                    </div>
+                    <div class="card-grid card-grid-suit" data-suit="diamonds"></div>
+                </div>
+
+                <!-- 4. 梅花：雷龍 -->
+                <div class="suit-row bg-emerald-950/50 rounded-xl p-2 sm:p-2.5 border border-emerald-500/25 flex flex-col justify-between" id="row-clubs">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <div class="flex items-center gap-1 truncate">
+                            <span class="text-sm sm:text-base text-lime-400">♣</span>
+                            <span class="font-bold text-[11px] sm:text-xs text-lime-100 truncate">梅花（雷龍）</span>
+                            <span class="text-[9px] sm:text-[10px] px-1 py-0.2 rounded bg-lime-950/80 text-lime-300 count-badge font-mono shrink-0">0/13</span>
+                        </div>
+                        <div class="w-10 sm:w-16 bg-emerald-950 rounded-full h-1 sm:h-1.5 overflow-hidden border border-emerald-500/30 shrink-0 ml-1">
+                            <div class="suit-progress bg-gradient-to-r from-lime-500 to-emerald-400 h-full w-0 transition-all duration-500" data-suit="clubs"></div>
+                        </div>
+                    </div>
+                    <div class="card-grid card-grid-suit" data-suit="clubs"></div>
+                </div>
+
+            </div>
+        </main>
+
+        <!-- 下方：探險挖掘台與出土特寫展示 -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            
+            <!-- 左側 2 欄：挖掘操作控制核心 -->
+            <div class="md:col-span-2 flex flex-col gap-3">
+                <div class="glass-panel rounded-2xl p-3 sm:p-4 shadow-xl">
+                    
+                    <!-- 模式切換分頁標籤 -->
+                    <div class="flex rounded-xl bg-emerald-950/90 p-1 border border-emerald-500/30 mb-3">
+                        <button id="tab-specific" class="flex-1 py-1.5 sm:py-2 text-xs sm:text-sm font-bold rounded-lg transition-all duration-300 bg-gradient-to-r from-emerald-600 to-lime-600 text-white shadow-md flex items-center justify-center gap-1.5">
+                            <span>🔍</span>
+                            <span>定點精準挖掘（指定抽牌）</span>
+                        </button>
+                        <button id="tab-random" class="flex-1 py-1.5 sm:py-2 text-xs sm:text-sm font-bold rounded-lg transition-all duration-300 text-emerald-300 hover:text-white flex items-center justify-center gap-1.5">
+                            <span>🦴</span>
+                            <span>叢林隨機探尋（隨機抽牌）</span>
+                        </button>
+                    </div>
+
+                    <!-- 模式 1：指定挖掘面板 -->
+                    <div id="panel-specific" class="space-y-3">
+                        <!-- 花色挑選器 -->
+                        <div>
+                            <label class="block text-xs font-semibold text-emerald-200 mb-1.5">選擇撲克花色（恐龍化石）：</label>
+                            <div class="grid grid-cols-5 gap-1.5" id="suit-selector-group">
+                                <button type="button" data-suit="spades" class="suit-btn selected-suit-active flex flex-col items-center justify-center p-2 rounded-xl border border-emerald-500/30 bg-emerald-900/30 hover:bg-emerald-800/40 transition">
+                                    <span class="text-base sm:text-lg">♠</span>
+                                    <span class="text-[10px] sm:text-xs font-bold text-emerald-100 mt-0.5">黑桃</span>
+                                    <span class="text-[8px] sm:text-[9px] text-emerald-300/80">暴龍</span>
+                                </button>
+                                <button type="button" data-suit="hearts" class="suit-btn flex flex-col items-center justify-center p-2 rounded-xl border border-emerald-500/30 bg-emerald-900/30 hover:bg-emerald-800/40 transition">
+                                    <span class="text-base sm:text-lg text-rose-400">♥</span>
+                                    <span class="text-[10px] sm:text-xs font-bold text-rose-200 mt-0.5">愛心</span>
+                                    <span class="text-[8px] sm:text-[9px] text-rose-300/80">三角龍</span>
+                                </button>
+                                <button type="button" data-suit="diamonds" class="suit-btn flex flex-col items-center justify-center p-2 rounded-xl border border-emerald-500/30 bg-emerald-900/30 hover:bg-emerald-800/40 transition">
+                                    <span class="text-base sm:text-lg text-amber-300">♦</span>
+                                    <span class="text-[10px] sm:text-xs font-bold text-amber-100 mt-0.5">方塊</span>
+                                    <span class="text-[8px] sm:text-[9px] text-amber-300/80">翼手龍</span>
+                                </button>
+                                <button type="button" data-suit="clubs" class="suit-btn flex flex-col items-center justify-center p-2 rounded-xl border border-emerald-500/30 bg-emerald-900/30 hover:bg-emerald-800/40 transition">
+                                    <span class="text-base sm:text-lg text-lime-400">♣</span>
+                                    <span class="text-[10px] sm:text-xs font-bold text-lime-100 mt-0.5">梅花</span>
+                                    <span class="text-[8px] sm:text-[9px] text-lime-300/80">雷龍</span>
+                                </button>
+                                <button type="button" data-suit="jokers" class="suit-btn flex flex-col items-center justify-center p-2 rounded-xl border border-amber-400/40 bg-emerald-950/60 hover:bg-emerald-900/50 transition">
+                                    <span class="text-base sm:text-lg text-amber-300">👑</span>
+                                    <span class="text-[10px] sm:text-xs font-bold text-amber-200 mt-0.5">鬼牌</span>
+                                    <span class="text-[8px] sm:text-[9px] text-amber-300/80">特使</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 點數下拉選單 -->
+                        <div>
+                            <label for="rank-selector" class="block text-xs font-semibold text-emerald-200 mb-1.5" id="rank-label">指定化石化身點數：</label>
+                            <div class="relative">
+                                <select id="rank-selector" class="w-full bg-emerald-950 border border-emerald-400/40 rounded-xl px-3 py-2 text-sm text-amber-200 font-num font-bold focus:outline-none focus:ring-2 focus:ring-emerald-400 appearance-none shadow-inner">
+                                    <!-- 動態生成 A 至 K 或鬼牌特使 -->
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-emerald-300">
+                                    ▼
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 指定抽牌按鈕 -->
+                        <button id="btn-draw-specific" class="w-full py-2.5 px-4 rounded-xl font-bold text-sm bg-gradient-to-r from-amber-500 via-emerald-600 to-teal-600 hover:from-amber-400 hover:to-teal-500 text-white shadow-lg shadow-emerald-950/50 transform active:scale-98 transition flex items-center justify-center gap-2">
+                            <span>🦴</span>
+                            <span>挖掘這張指定恐龍牌</span>
+                            <span>🦴</span>
+                        </button>
+                    </div>
+
+                    <!-- 模式 2：隨機叢林探尋面板 -->
+                    <div id="panel-random" class="space-y-3 hidden">
+                        <div class="p-3 rounded-xl bg-emerald-950/60 border border-emerald-500/25 text-center">
+                            <p class="text-xs text-emerald-200">
+                                踏入茂密的白堊紀叢林，探測器將自動排除已出土的恐龍，從沉睡的地層中喚醒下一張化石！
+                            </p>
+                            <p class="text-[11px] text-amber-300/90 mt-1">
+                                ✦ 挖到王牌恐龍特使，即可獲得額外親手探勘 1 次的機會！
+                            </p>
+                        </div>
+
+                        <button id="btn-draw-random" class="w-full py-3 px-4 rounded-xl font-bold text-sm bg-gradient-to-r from-emerald-600 via-teal-600 to-lime-600 hover:from-emerald-500 hover:to-lime-500 text-white shadow-lg shadow-emerald-950/60 transform active:scale-98 transition flex items-center justify-center gap-2">
+                            <span class="text-lg">🌿</span>
+                            <span id="random-btn-text">探測叢林：隨機挖掘一張牌</span>
+                        </button>
+                    </div>
+
+                </div>
+
+                <!-- 探險隊長通訊欄（分成清晰兩行且完整顯示） -->
+                <div class="glass-panel rounded-2xl p-2.5 sm:p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+                    <div class="flex items-start gap-2.5 w-full min-w-0">
+                        <span class="text-xl sm:text-2xl shrink-0 mt-0.5">🦖</span>
+                        <div id="witch-message" class="text-xs sm:text-sm text-emerald-100 flex-1 leading-snug">
+                            <div class="font-bold text-amber-300 text-xs sm:text-sm mb-0.5">探險隊員請注意！</div>
+                            <div class="text-emerald-200/90 text-[11px] sm:text-xs">為圖鑑湊齊任一花色（黑桃、愛心、方塊、梅花）的 13 張同花順吧！</div>
+                        </div>
+                    </div>
+
+                    <!-- 鬼牌獎勵按鈕 -->
+                    <button id="btn-joker-bonus" class="hidden shrink-0 self-end sm:self-auto px-3 py-1.5 rounded-xl font-bold text-xs bg-gradient-to-r from-amber-400 to-orange-500 text-emerald-950 shadow-md animate-bounce flex items-center gap-1 border border-amber-200 whitespace-nowrap">
+                        <span>🦖</span>
+                        <span>親手挖寶！（<span id="joker-bonus-count">1</span>）</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 右側 1 欄：最新出土立體特寫展示與重置按鈕 -->
+            <div class="md:col-span-1 glass-panel rounded-2xl p-3 sm:p-4 flex flex-col items-center justify-between text-center relative overflow-hidden">
+                <div class="w-full flex justify-between items-center pb-1.5 border-b border-emerald-500/20 text-xs">
+                    <span class="text-emerald-300 font-bold">最新出土展示</span>
+                    <span id="deck-stats" class="text-[11px] font-mono text-amber-300">化石庫餘：54 / 54</span>
+                </div>
+
+                <!-- 卡牌 3D 旋轉展示容器 -->
+                <div class="perspective-container my-2 sm:my-3">
+                    <div id="latest-card-3d" class="w-24 sm:w-28 h-36 sm:h-40 rounded-xl relative shadow-2xl card-flip-inner flipped">
+                        <!-- 背面 -->
+                        <div class="card-face card-back absolute inset-0 bg-gradient-to-br from-emerald-950 via-teal-900 to-emerald-950 rounded-xl border-2 border-emerald-400/40 flex flex-col items-center justify-center p-2 text-emerald-300">
+                            <span class="text-3xl">🦴</span>
+                            <span class="text-[10px] mt-2 font-dino text-amber-200 tracking-wider font-bold">DINOSAUR</span>
+                        </div>
+                        <!-- 正面 -->
+                        <div id="showcase-card-front" class="card-face card-front absolute inset-0 rounded-xl border-2 border-amber-300/80 bg-gradient-to-b from-emerald-900/90 to-emerald-950/90 flex flex-col justify-between p-2 shadow-inner">
+                            <div class="flex justify-between items-center">
+                                <span class="font-num font-extrabold text-sm text-emerald-200" id="showcase-top-rank">?</span>
+                                <span class="text-xs" id="showcase-top-suit">✦</span>
+                            </div>
+                            <div class="text-3xl sm:text-4xl my-auto text-amber-300 text-center filter drop-shadow" id="showcase-center-symbol">
+                                🦴
+                            </div>
+                            <div class="flex justify-between items-center rotate-180">
+                                <span class="font-num font-extrabold text-sm text-emerald-200" id="showcase-bot-rank">?</span>
+                                <span class="text-xs" id="showcase-bot-suit">✦</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 重置地圖按鈕 -->
+                <div class="w-full pt-1.5 border-t border-emerald-500/20">
+                    <button id="btn-request-reset" class="text-[11px] text-emerald-300/70 hover:text-rose-300 transition flex items-center justify-center gap-1 mx-auto py-1">
+                        <span>↺</span>
+                        <span>重置挖掘地圖</span>
+                    </button>
+                </div>
+            </div>
+
+        </section>
+
+    </div>
+
+    <!-- 自製重置確認視窗 (完全不使用 alert/confirm) -->
+    <div id="reset-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 hidden">
+        <div class="glass-panel max-w-sm w-full rounded-2xl p-4 sm:p-5 text-center border-2 border-amber-400/50 shadow-2xl transform transition-all scale-95" id="reset-modal-box">
+            <div class="w-12 h-12 mx-auto rounded-full bg-emerald-900/90 border border-amber-400/50 flex items-center justify-center text-2xl mb-3 shadow-inner">
+                🦕
+            </div>
+            <h3 class="font-dino font-bold text-base text-amber-100 mb-1">重置恐龍挖掘地圖？</h3>
+            <p class="text-xs text-emerald-200/90 mb-4 leading-relaxed">
+                確定要重新勘探嗎？這將會清除目前的 54 張出土進度與儲存紀錄，重新踏上白堊紀旅程！
+            </p>
+            <div class="flex gap-2.5">
+                <button id="btn-cancel-reset" class="flex-1 py-2 rounded-xl text-xs font-semibold bg-emerald-950 hover:bg-emerald-900 text-emerald-200 border border-emerald-500/40 transition">
+                    繼續探險
+                </button>
+                <button id="btn-confirm-reset" class="flex-1 py-2 rounded-xl text-xs font-semibold bg-gradient-to-r from-amber-600 to-rose-600 hover:from-amber-500 hover:to-rose-500 text-white shadow-md transition">
+                    確定重置
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 雲端與應用邏輯整合 -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // 雲端儲存控制器
+        window.CloudSync = {
+            isReady: false,
+            userDocRef: null,
+            async init() {
+                try {
+                    const appId = typeof __app_id !== 'undefined' ? __app_id : 'dino-flush-expedition-2026';
+                    if (typeof __firebase_config === 'undefined') {
+                        console.warn('Firebase 設定未提供，啟動本地記憶模式。');
+                        return;
+                    }
+                    const firebaseConfig = JSON.parse(__firebase_config);
+                    const app = initializeApp(firebaseConfig);
+                    const auth = getAuth(app);
+                    const db = getFirestore(app);
+
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+
+                    const user = auth.currentUser;
+                    if (!user) return;
+
+                    const userId = user.uid;
+                    this.userDocRef = doc(db, 'artifacts', appId, 'users', userId, 'gameData', 'progress');
+                    this.isReady = true;
+
+                    // 雲端即時同步監聽
+                    onSnapshot(this.userDocRef, (snap) => {
+                        if (snap.exists()) {
+                            const data = snap.data();
+                            if (window.applyCloudData) {
+                                window.applyCloudData(data);
+                            }
+                        }
+                    }, (err) => {
+                        console.warn('雲端監聽回報：', err);
+                    });
+
+                    const badge = document.getElementById('storage-status-badge');
+                    if (badge) {
+                        badge.textContent = '☁️ 雲端記憶已即時連線';
+                        badge.className = 'text-[10px] text-amber-200 bg-amber-950/80 px-2 py-1 rounded-xl border border-amber-400/50';
+                    }
+                } catch (e) {
+                    console.warn('雲端連線失敗，自動啟用本地快取備份：', e);
+                }
+            },
+            async save(data) {
+                if (!this.isReady || !this.userDocRef) return false;
+                try {
+                    await setDoc(this.userDocRef, {
+                        ...data,
+                        updatedAt: Date.now()
+                    });
+                    const badge = document.getElementById('storage-status-badge');
+                    if (badge) {
+                        badge.textContent = '☁️ 雲端存檔已同步';
+                    }
+                    return true;
+                } catch (e) {
+                    console.error('雲端寫入失敗：', e);
+                    return false;
+                }
+            }
+        };
+
+        // 啟動雲端連線
+        window.CloudSync.init();
+    </script>
+
+    <!-- 主程式邏輯與恐龍探險音效引擎 -->
+    <script>
+        // 音效引擎（使用 Tone.js 即時合成，無須外部音效檔案）
+        let soundEnabled = true;
+        let audioSynth = null;
+        let celebrationSynth = null;
+
+        function initAudio() {
+            try {
+                if (!audioSynth && typeof Tone !== 'undefined') {
+                    audioSynth = new Tone.PolySynth(Tone.Synth, {
+                        oscillator: { type: "triangle" },
+                        envelope: { attack: 0.02, decay: 0.1, sustain: 0.2, release: 0.4 }
+                    }).toDestination();
+                    audioSynth.volume.value = -8;
+
+                    celebrationSynth = new Tone.PolySynth(Tone.Synth, {
+                        oscillator: { type: "sine" },
+                        envelope: { attack: 0.05, decay: 0.2, sustain: 0.4, release: 0.8 }
+                    }).toDestination();
+                    celebrationSynth.volume.value = -6;
+                }
+            } catch (err) {
+                console.warn('音訊引擎初始化跳過：', err);
+            }
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            try {
+                if (Tone.context.state !== 'running') {
+                    Tone.start();
+                }
+                initAudio();
+                if (!audioSynth) return;
+
+                const now = Tone.now();
+                if (type === 'dig') {
+                    audioSynth.triggerAttackRelease(["C3", "G3"], "16n", now);
+                } else if (type === 'joker') {
+                    audioSynth.triggerAttackRelease(["E4", "G#4", "B4", "E5"], "8n", now);
+                } else if (type === 'celebrate') {
+                    if (celebrationSynth) {
+                        celebrationSynth.triggerAttackRelease(["C4", "E4", "G4", "C5"], "4n", now);
+                        celebrationSynth.triggerAttackRelease(["E4", "G4", "B4", "E5"], "4n", now + 0.25);
+                    }
+                } else if (type === 'warning') {
+                    audioSynth.triggerAttackRelease(["F#3", "D3"], "16n", now);
+                }
+            } catch (e) {
+                // 音訊忽略處理
+            }
+        }
+
+        const btnToggleSound = document.getElementById('btn-toggle-sound');
+        const soundIcon = document.getElementById('sound-icon');
+        btnToggleSound.addEventListener('click', () => {
+            soundEnabled = !soundEnabled;
+            soundIcon.textContent = soundEnabled ? '🔊' : '🔇';
+            if (soundEnabled) {
+                initAudio();
+                playSound('dig');
+            }
+        });
+
+        // 4 種恐龍撲克花色定義
+        const SUITS_CONFIG = [
+            { key: 'spades', name: '黑桃', dinoName: '暴龍', symbol: '♠', color: 'text-emerald-300', bgGlow: 'from-emerald-900/80 to-teal-950/80', border: 'border-emerald-400' },
+            { key: 'hearts', name: '愛心', dinoName: '三角龍', symbol: '♥', color: 'text-rose-400', bgGlow: 'from-rose-950/80 to-emerald-950/80', border: 'border-rose-400' },
+            { key: 'diamonds', name: '方塊', dinoName: '翼手龍', symbol: '♦', color: 'text-amber-300', bgGlow: 'from-amber-950/80 to-emerald-950/80', border: 'border-amber-400' },
+            { key: 'clubs', name: '梅花', dinoName: '雷龍', symbol: '♣', color: 'text-lime-400', bgGlow: 'from-lime-950/80 to-emerald-950/80', border: 'border-lime-400' }
+        ];
+
+        // 點數 A 至 K
+        const RANKS_CONFIG = [
+            { value: 1, label: 'A' },
+            { value: 2, label: '2' },
+            { value: 3, label: '3' },
+            { value: 4, label: '4' },
+            { value: 5, label: '5' },
+            { value: 6, label: '6' },
+            { value: 7, label: '7' },
+            { value: 8, label: '8' },
+            { value: 9, label: '9' },
+            { value: 10, label: '10' },
+            { value: 11, label: 'J' },
+            { value: 12, label: 'Q' },
+            { value: 13, label: 'K' }
+        ];
+
+        // 鬼牌配置（紅鬼牌、黑鬼牌）
+        const JOKERS_CONFIG = [
+            { id: 'jokers-red', key: 'jokers', name: '火焰霸王龍（紅鬼牌）', symbol: '👑', icon: '🦖🔥', label: '✦', color: 'text-rose-400', title: '火焰霸王龍（紅鬼牌）', short: '火霸' },
+            { id: 'jokers-black', key: 'jokers', name: '暗影迅猛龍（黑鬼牌）', symbol: '👑', icon: '⚡🦖', label: '✦', color: 'text-emerald-300', title: '暗影迅猛龍（黑鬼牌）', short: '暗迅' }
+        ];
+
+        // 建立完整 54 張恐龍牌庫
+        const FULL_DECK = [];
+        SUITS_CONFIG.forEach(s => {
+            RANKS_CONFIG.forEach(r => {
+                FULL_DECK.push({
+                    id: `${s.key}-${r.value}`,
+                    suitKey: s.key,
+                    suitName: s.name,
+                    dinoName: s.dinoName,
+                    symbol: s.symbol,
+                    rankVal: r.value,
+                    rankLabel: r.label,
+                    color: s.color,
+                    bgGlow: s.bgGlow,
+                    border: s.border,
+                    isJoker: false
+                });
+            });
+        });
+        JOKERS_CONFIG.forEach(j => {
+            FULL_DECK.push({
+                id: j.id,
+                suitKey: 'jokers',
+                suitName: '鬼牌',
+                symbol: j.symbol,
+                rankVal: 99,
+                rankLabel: j.label,
+                color: j.color,
+                bgGlow: 'from-amber-950/80 to-rose-950/80',
+                border: 'border-amber-400',
+                isJoker: true,
+                jokerName: j.title
+            });
+        });
+
+        // 應用全域狀態
+        let drawnCardIds = new Set();
+        let currentSuitSelect = 'spades';
+        let latestCard = null;
+        let bonusDrawCount = 0;
+        let isCelebrating = false;
+
+        // DOM 元素快取
+        const rankSelector = document.getElementById('rank-selector');
+        const rankLabel = document.getElementById('rank-label');
+        const suitBtns = document.querySelectorAll('.suit-btn');
+        const tabSpecific = document.getElementById('tab-specific');
+        const tabRandom = document.getElementById('tab-random');
+        const panelSpecific = document.getElementById('panel-specific');
+        const panelRandom = document.getElementById('panel-random');
+        const btnDrawSpecific = document.getElementById('btn-draw-specific');
+        const btnDrawRandom = document.getElementById('btn-draw-random');
+        const btnJokerBonus = document.getElementById('btn-joker-bonus');
+        const jokerBonusCountEl = document.getElementById('joker-bonus-count');
+        const witchMessage = document.getElementById('witch-message');
+        const deckStats = document.getElementById('deck-stats');
+        const goalStatus = document.getElementById('goal-status');
+        const jokersCountBadge = document.getElementById('jokers-count-badge');
+        const resetModal = document.getElementById('reset-modal');
+        const btnRequestReset = document.getElementById('btn-request-reset');
+        const btnCancelReset = document.getElementById('btn-cancel-reset');
+        const btnConfirmReset = document.getElementById('btn-confirm-reset');
+        const expeditionRankBadge = document.getElementById('expedition-rank-badge');
+
+        // 初始化四宮格卡牌網格 DOM
+        function initCardGrids() {
+            SUITS_CONFIG.forEach(suit => {
+                const container = document.querySelector(`.card-grid[data-suit="${suit.key}"]`);
+                if (!container) return;
+                container.innerHTML = '';
+
+                RANKS_CONFIG.forEach(rank => {
+                    const cardId = `${suit.key}-${rank.value}`;
+                    const cardEl = document.createElement('div');
+                    cardEl.id = `card-slot-${cardId}`;
+                    cardEl.className = 'magic-card uncollected rounded-[3px] sm:rounded p-0.5 flex flex-col justify-between items-center text-center cursor-pointer transition';
+                    cardEl.innerHTML = `
+                        <div class="text-[8px] sm:text-[10px] font-bold font-dino w-full text-left leading-none ${suit.color}">${rank.label}</div>
+                        <div class="text-[9px] sm:text-xs font-bold my-auto leading-none ${suit.color}">${suit.symbol}</div>
+                        <div class="text-[8px] sm:text-[10px] font-bold font-dino w-full text-right leading-none ${suit.color}">${rank.label}</div>
+                    `;
+                    cardEl.addEventListener('click', () => {
+                        selectCardInSpecificMode(suit.key, rank.value);
+                    });
+                    container.appendChild(cardEl);
+                });
+            });
+
+            // 渲染頂部鬼牌特使卡槽
+            const jokerContainer = document.getElementById('jokers-slot-container');
+            if (jokerContainer) {
+                jokerContainer.innerHTML = '';
+                JOKERS_CONFIG.forEach(j => {
+                    const cardEl = document.createElement('div');
+                    cardEl.id = `card-slot-${j.id}`;
+                    cardEl.className = 'magic-card uncollected rounded-[4px] p-0.5 w-7 sm:w-8 h-9 sm:h-10 flex flex-col justify-between items-center text-center cursor-pointer transition shrink-0';
+                    cardEl.innerHTML = `
+                        <div class="text-[7px] font-bold ${j.color}">✦</div>
+                        <div class="text-[10px] leading-none ${j.color}">👑</div>
+                        <div class="text-[6px] font-semibold text-emerald-200/90 leading-none whitespace-nowrap">${j.short}</div>
+                    `;
+                    cardEl.addEventListener('click', () => {
+                        selectCardInSpecificMode('jokers', j.id);
+                    });
+                    jokerContainer.appendChild(cardEl);
+                });
+            }
+
+            populateRankOptions();
+        }
+
+        // 下拉選單生成選項
+        function populateRankOptions() {
+            rankSelector.innerHTML = '';
+            if (currentSuitSelect === 'jokers') {
+                rankLabel.textContent = '挑選恐龍王牌特使：';
+                JOKERS_CONFIG.forEach(j => {
+                    const opt = document.createElement('option');
+                    opt.value = j.id;
+                    opt.textContent = `${j.title}（✦）`;
+                    rankSelector.appendChild(opt);
+                });
+            } else {
+                rankLabel.textContent = '指定化石化身點數：';
+                RANKS_CONFIG.forEach(r => {
+                    const opt = document.createElement('option');
+                    opt.value = r.value;
+                    opt.textContent = r.label;
+                    rankSelector.appendChild(opt);
+                });
+            }
+        }
+
+        // 點擊地圖卡槽快速定位指定抽牌
+        function selectCardInSpecificMode(suitKey, rankOrId) {
+            currentSuitSelect = suitKey;
+            suitBtns.forEach(btn => {
+                if (btn.dataset.suit === suitKey) {
+                    btn.classList.add('selected-suit-active');
+                } else {
+                    btn.classList.remove('selected-suit-active');
+                }
+            });
+            populateRankOptions();
+            rankSelector.value = rankOrId;
+            switchTab('specific');
+            playSound('dig');
+        }
+
+        // 模式分頁切換
+        function switchTab(mode) {
+            if (mode === 'specific') {
+                tabSpecific.classList.add('bg-gradient-to-r', 'from-emerald-600', 'to-lime-600', 'text-white', 'shadow-md');
+                tabSpecific.classList.remove('text-emerald-300');
+                tabRandom.classList.remove('bg-gradient-to-r', 'from-emerald-600', 'to-lime-600', 'text-white', 'shadow-md');
+                tabRandom.classList.add('text-emerald-300');
+                panelSpecific.classList.remove('hidden');
+                panelRandom.classList.add('hidden');
+            } else {
+                tabRandom.classList.add('bg-gradient-to-r', 'from-emerald-600', 'to-lime-600', 'text-white', 'shadow-md');
+                tabRandom.classList.remove('text-emerald-300');
+                tabSpecific.classList.remove('bg-gradient-to-r', 'from-emerald-600', 'to-lime-600', 'text-white', 'shadow-md');
+                tabSpecific.classList.add('text-emerald-300');
+                panelRandom.classList.remove('hidden');
+                panelSpecific.classList.add('hidden');
+            }
+        }
+
+        tabSpecific.addEventListener('click', () => switchTab('specific'));
+        tabRandom.addEventListener('click', () => switchTab('random'));
+
+        // 花色選擇按鈕點擊切換
+        suitBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                suitBtns.forEach(b => b.classList.remove('selected-suit-active'));
+                btn.classList.add('selected-suit-active');
+                currentSuitSelect = btn.dataset.suit;
+                populateRankOptions();
+                playSound('dig');
+                saveGameState();
+            });
+        });
+
+        // 更新探險隊員等級稱號
+        function updateExpeditionRank() {
+            const count = drawnCardIds.size;
+            let rank = '初階實習隊員';
+            if (count >= 50) {
+                rank = '🌟 白堊紀傳奇古生物學者';
+            } else if (count >= 39) {
+                rank = '🦖 探險隊首席總指揮';
+            } else if (count >= 26) {
+                rank = '🦴 資深古生物挖掘專家';
+            } else if (count >= 13) {
+                rank = '⛏️ 恐龍地層資深探勘官';
+            } else if (count >= 5) {
+                rank = '🌿 探勘先鋒隊員';
+            }
+            if (expeditionRankBadge) {
+                expeditionRankBadge.textContent = rank;
+            }
+        }
+
+        // 核心挖掘與出土處理
+        function executeDraw(card, source = 'normal') {
+            if (!card) return;
+
+            drawnCardIds.add(card.id);
+            latestCard = card;
+
+            if (card.isJoker) {
+                bonusDrawCount++;
+                playSound('joker');
+                witchMessage.innerHTML = `
+                    <div class="font-bold text-amber-300 text-xs sm:text-sm mb-0.5">🦖 驚人發現！出土了【${card.jokerName}】！</div>
+                    <div class="text-emerald-200/90 text-[11px] sm:text-xs">獲得 1 次親自動手的探勘獎勵，快點擊親手挖寶！</div>
+                `;
+            } else {
+                playSound('dig');
+                const dinoInfo = card.dinoName ? `（${card.dinoName}）` : '';
+                if (source === 'bonus') {
+                    witchMessage.innerHTML = `
+                        <div class="font-bold text-amber-300 text-xs sm:text-sm mb-0.5">小小隊員親手探勘成功！</div>
+                        <div class="text-emerald-200/90 text-[11px] sm:text-xs">挖掘出土：<span class="${card.color} font-bold">${card.suitName}${dinoInfo} ${card.rankLabel}</span>！</div>
+                    `;
+                } else {
+                    witchMessage.innerHTML = `
+                        <div class="font-bold text-emerald-300 text-xs sm:text-sm mb-0.5">探測器回報：化石已出土！</div>
+                        <div class="text-emerald-200/90 text-[11px] sm:text-xs">成功解鎖：<span class="${card.color} font-bold">${card.suitName}${dinoInfo} ${card.rankLabel}</span>！</div>
+                    `;
+                }
+            }
+
+            updateBoardUI();
+            updateShowcase(card);
+            checkFlushGoal();
+            updateExpeditionRank();
+            saveGameState();
+        }
+
+        // 指定抽牌按鈕
+        btnDrawSpecific.addEventListener('click', () => {
+            let targetId = '';
+            if (currentSuitSelect === 'jokers') {
+                targetId = rankSelector.value;
+            } else {
+                targetId = `${currentSuitSelect}-${rankSelector.value}`;
+            }
+
+            if (drawnCardIds.has(targetId)) {
+                playSound('warning');
+                const card = FULL_DECK.find(c => c.id === targetId);
+                const dinoInfo = card && card.dinoName ? `（${card.dinoName}）` : '';
+                witchMessage.innerHTML = `
+                    <div class="font-bold text-amber-400 text-xs sm:text-sm mb-0.5">⚠️ 這張化石早已出土！</div>
+                    <div class="text-amber-200/90 text-[11px] sm:text-xs">【${card ? card.suitName : ''}${dinoInfo} ${card ? card.rankLabel : ''}】已在地圖中，請挑選其他化石。</div>
+                `;
+                highlightExistingSlot(targetId);
+                return;
+            }
+
+            const targetCard = FULL_DECK.find(c => c.id === targetId);
+            if (targetCard) {
+                executeDraw(targetCard, 'specific');
+            }
+        });
+
+        // 隨機抽牌（過濾已出土卡牌）
+        function drawRandomCard(source = 'normal') {
+            const remainingDeck = FULL_DECK.filter(c => !drawnCardIds.has(c.id));
+            if (remainingDeck.length === 0) {
+                witchMessage.innerHTML = `
+                    <div class="font-bold text-amber-300 text-xs sm:text-sm mb-0.5">🎉 遠古探險大圓滿！</div>
+                    <div class="text-emerald-200/90 text-[11px] sm:text-xs">整副 54 張恐龍化石已全數挖掘完成！</div>
+                `;
+                return;
+            }
+
+            const randomIndex = Math.floor(Math.random() * remainingDeck.length);
+            const chosenCard = remainingDeck[randomIndex];
+            executeDraw(chosenCard, source);
+        }
+
+        btnDrawRandom.addEventListener('click', () => {
+            drawRandomCard('normal');
+        });
+
+        // 鬼牌獎勵親手挖寶
+        btnJokerBonus.addEventListener('click', () => {
+            if (bonusDrawCount > 0) {
+                bonusDrawCount--;
+                drawRandomCard('bonus');
+            }
+        });
+
+        // 槽位重複提示高亮
+        function highlightExistingSlot(cardId) {
+            const slot = document.getElementById(`card-slot-${cardId}`);
+            if (slot) {
+                slot.classList.add('scale-125', 'ring-2', 'ring-amber-300');
+                setTimeout(() => {
+                    slot.classList.remove('scale-125', 'ring-2', 'ring-amber-300');
+                }, 900);
+            }
+        }
+
+        // 更新四宮格與鬼牌視覺狀態
+        function updateBoardUI() {
+            SUITS_CONFIG.forEach(suit => {
+                let count = 0;
+                RANKS_CONFIG.forEach(rank => {
+                    const cardId = `${suit.key}-${rank.value}`;
+                    const slot = document.getElementById(`card-slot-${cardId}`);
+                    if (!slot) return;
+
+                    if (drawnCardIds.has(cardId)) {
+                        count++;
+                        slot.classList.remove('uncollected');
+                        slot.classList.add('active', 'bg-emerald-900/90', 'border', suit.border);
+                    } else {
+                        slot.classList.add('uncollected');
+                        slot.classList.remove('active', 'bg-emerald-900/90', 'border', suit.border);
+                    }
+                });
+
+                const rowEl = document.getElementById(`row-${suit.key}`);
+                if (rowEl) {
+                    const badge = rowEl.querySelector('.count-badge');
+                    const progress = rowEl.querySelector('.suit-progress');
+                    if (badge) badge.textContent = `${count}/13`;
+                    if (progress) progress.style.width = `${(count / 13) * 100}%`;
+                }
+            });
+
+            // 更新鬼牌狀態
+            let jokerDrawnCount = 0;
+            JOKERS_CONFIG.forEach(j => {
+                const slot = document.getElementById(`card-slot-${j.id}`);
+                if (!slot) return;
+                if (drawnCardIds.has(j.id)) {
+                    jokerDrawnCount++;
+                    slot.classList.remove('uncollected');
+                    slot.classList.add('active', 'bg-emerald-900/90', 'border', 'border-amber-400', 'joker-pulse');
+                } else {
+                    slot.classList.add('uncollected');
+                    slot.classList.remove('active', 'bg-emerald-900/90', 'border', 'border-amber-400', 'joker-pulse');
+                }
+            });
+            jokersCountBadge.textContent = `${jokerDrawnCount} / 2`;
+
+            // 更新剩餘庫存
+            const remaining = FULL_DECK.length - drawnCardIds.size;
+            deckStats.textContent = `化石庫餘：${remaining} / ${FULL_DECK.length}`;
+
+            // 更新獎勵按鈕
+            if (bonusDrawCount > 0 && remaining > 0) {
+                btnJokerBonus.classList.remove('hidden');
+                jokerBonusCountEl.textContent = bonusDrawCount;
+            } else {
+                btnJokerBonus.classList.add('hidden');
+            }
+        }
+
+        // 更新立體特寫翻轉卡片
+        function updateShowcase(card) {
+            const card3D = document.getElementById('latest-card-3d');
+            const topRank = document.getElementById('showcase-top-rank');
+            const topSuit = document.getElementById('showcase-top-suit');
+            const botRank = document.getElementById('showcase-bot-rank');
+            const botSuit = document.getElementById('showcase-bot-suit');
+            const centerSym = document.getElementById('showcase-center-symbol');
+
+            card3D.classList.remove('flipped');
+            setTimeout(() => {
+                topRank.textContent = card.rankLabel;
+                botRank.textContent = card.rankLabel;
+                topSuit.textContent = card.symbol;
+                botSuit.textContent = card.symbol;
+                centerSym.textContent = card.isJoker ? '👑' : card.symbol;
+
+                topRank.className = `font-num font-extrabold text-sm ${card.color}`;
+                botRank.className = `font-num font-extrabold text-sm ${card.color}`;
+                topSuit.className = `text-xs ${card.color}`;
+                botSuit.className = `text-xs ${card.color}`;
+                centerSym.className = `text-3xl sm:text-4xl my-auto text-center filter drop-shadow ${card.color}`;
+
+                card3D.classList.add('flipped');
+            }, 180);
+        }
+
+        // 檢查同花順目標
+        function checkFlushGoal() {
+            let flushAchieved = false;
+            let winningSuitName = '';
+            let winningDino = '';
+
+            SUITS_CONFIG.forEach(suit => {
+                const count = RANKS_CONFIG.filter(r => drawnCardIds.has(`${suit.key}-${r.value}`)).length;
+                if (count === 13) {
+                    flushAchieved = true;
+                    winningSuitName = suit.name;
+                    winningDino = suit.dinoName;
+                }
+            });
+
+            if (flushAchieved) {
+                goalStatus.innerHTML = `<span class="text-amber-300 font-extrabold animate-pulse">🎉 ${winningSuitName}（${winningDino}）同花順達成！</span>`;
+                if (!isCelebrating) {
+                    isCelebrating = true;
+                    playSound('celebrate');
+                    triggerCelebration();
+                }
+            } else {
+                goalStatus.textContent = '任一花色集齊 13 張即達成同花順！';
+                isCelebrating = false;
+            }
+        }
+
+        // 彩花慶典特效
+        function triggerCelebration() {
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 80,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+                setTimeout(() => {
+                    confetti({
+                        particleCount: 50,
+                        angle: 60,
+                        spread: 55,
+                        origin: { x: 0 }
+                    });
+                    confetti({
+                        particleCount: 50,
+                        angle: 120,
+                        spread: 55,
+                        origin: { x: 1 }
+                    });
+                }, 250);
+            }
+        }
+
+        // 重置 Modal
+        btnRequestReset.addEventListener('click', () => {
+            resetModal.classList.remove('hidden');
+        });
+
+        btnCancelReset.addEventListener('click', () => {
+            resetModal.classList.add('hidden');
+        });
+
+        btnConfirmReset.addEventListener('click', () => {
+            resetModal.classList.add('hidden');
+            resetGame();
+        });
+
+        // 完整重置邏輯
+        function resetGame() {
+            drawnCardIds.clear();
+            latestCard = null;
+            bonusDrawCount = 0;
+            isCelebrating = false;
+            currentSuitSelect = 'spades';
+
+            suitBtns.forEach(btn => {
+                if (btn.dataset.suit === 'spades') {
+                    btn.classList.add('selected-suit-active');
+                } else {
+                    btn.classList.remove('selected-suit-active');
+                }
+            });
+            populateRankOptions();
+
+            const topRank = document.getElementById('showcase-top-rank');
+            const topSuit = document.getElementById('showcase-top-suit');
+            const botRank = document.getElementById('showcase-bot-rank');
+            const botSuit = document.getElementById('showcase-bot-suit');
+            const centerSym = document.getElementById('showcase-center-symbol');
+            topRank.textContent = '?';
+            botRank.textContent = '?';
+            topSuit.textContent = '✦';
+            botSuit.textContent = '✦';
+            centerSym.textContent = '🦴';
+            centerSym.className = 'text-3xl sm:text-4xl my-auto text-amber-300 text-center filter drop-shadow';
+
+            witchMessage.innerHTML = `
+                <div class="font-bold text-amber-300 text-xs sm:text-sm mb-0.5">探險地圖已重置完成！</div>
+                <div class="text-emerald-200/90 text-[11px] sm:text-xs">遠古地層已重新洗牌，請挑選新的化石進行挖掘！</div>
+            `;
+            updateBoardUI();
+            checkFlushGoal();
+            updateExpeditionRank();
+            saveGameState();
+        }
+
+        const STORAGE_KEY = 'dino_card_deck_state_v2';
+
+        // 儲存進度（本地快取與雲端同步）
+        function saveGameState() {
+            const payload = {
+                drawnCardIds: Array.from(drawnCardIds),
+                latestCardId: latestCard ? latestCard.id : null,
+                bonusDrawCount: bonusDrawCount,
+                currentSuitSelect: currentSuitSelect,
+                selectedRankVal: rankSelector.value || null
+            };
+
+            try {
+                sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+            } catch (e) {
+                console.warn('本地快取警告：', e);
+            }
+
+            if (window.CloudSync && window.CloudSync.isReady) {
+                window.CloudSync.save(payload);
+            }
+        }
+
+        // 載入進度
+        function applyStateData(state) {
+            if (!state) return;
+            if (Array.isArray(state.drawnCardIds)) {
+                drawnCardIds = new Set(state.drawnCardIds);
+            }
+            bonusDrawCount = state.bonusDrawCount || 0;
+            if (state.latestCardId) {
+                latestCard = FULL_DECK.find(c => c.id === state.latestCardId) || null;
+            }
+            if (state.currentSuitSelect) {
+                currentSuitSelect = state.currentSuitSelect;
+                suitBtns.forEach(btn => {
+                    if (btn.dataset.suit === currentSuitSelect) {
+                        btn.classList.add('selected-suit-active');
+                    } else {
+                        btn.classList.remove('selected-suit-active');
+                    }
+                });
+                populateRankOptions();
+                if (state.selectedRankVal) {
+                    rankSelector.value = state.selectedRankVal;
+                }
+            }
+
+            updateBoardUI();
+            if (latestCard) {
+                updateShowcase(latestCard);
+            }
+            checkFlushGoal();
+            updateExpeditionRank();
+        }
+
+        window.applyCloudData = function(data) {
+            applyStateData(data);
+        };
+
+        function loadLocalState() {
+            try {
+                const raw = sessionStorage.getItem(STORAGE_KEY);
+                if (raw) {
+                    const state = JSON.parse(raw);
+                    applyStateData(state);
+                }
+            } catch (e) {
+                console.warn('本地載入警告：', e);
+            }
+        }
+
+        // 遠古叢林孢子背景微粒
+        const canvas = document.getElementById('stardust-canvas');
+        const ctx = canvas.getContext('2d');
+        let spores = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            initSpores();
+        }
+
+        function initSpores() {
+            spores = [];
+            const count = Math.floor((canvas.width * canvas.height) / 9000);
+            for (let i = 0; i < count; i++) {
+                spores.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    radius: Math.random() * 1.5 + 0.4,
+                    alpha: Math.random() * 0.7 + 0.2,
+                    speed: Math.random() * 0.02 + 0.005,
+                    color: Math.random() > 0.4 ? '#34d399' : '#fef08a'
+                });
+            }
+        }
+
+        function animateSpores() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            spores.forEach(s => {
+                s.alpha += s.speed;
+                if (s.alpha > 0.9 || s.alpha < 0.2) {
+                    s.speed = -s.speed;
+                }
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
+                ctx.fillStyle = s.color;
+                ctx.globalAlpha = Math.max(0.1, s.alpha);
+                ctx.fill();
+            });
+            ctx.globalAlpha = 1;
+            requestAnimationFrame(animateSpores);
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        window.onload = function() {
+            resizeCanvas();
+            animateSpores();
+            initCardGrids();
+            loadLocalState();
+            updateBoardUI();
+            checkFlushGoal();
+            updateExpeditionRank();
+        };
+    </script>
+</body>
+</html>
+```
