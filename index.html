@@ -12,7 +12,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Noto+Sans+TC:wght@400;600;700;900&display=swap" rel="stylesheet">
     <!-- Canvas Confetti for Celebration -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <!-- Tone.js for Web Audio synthesis (No external URLs needed) -->
+    <!-- Tone.js for Web Audio synthesis -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
 
     <style>
@@ -35,10 +35,10 @@
 
         /* 探險隊高科技全息琥珀面板 */
         .glass-panel {
-            background: rgba(6, 26, 18, 0.88);
+            background: rgba(6, 26, 18, 0.90);
             backdrop-filter: blur(14px);
             -webkit-backdrop-filter: blur(14px);
-            border: 1px solid rgba(52, 211, 153, 0.28);
+            border: 1px solid rgba(52, 211, 153, 0.32);
             box-shadow: 0 8px 32px 0 rgba(2, 10, 7, 0.7);
         }
 
@@ -52,7 +52,7 @@
         }
 
         .magic-card.active {
-            box-shadow: 0 2px 10px rgba(52, 211, 153, 0.45);
+            box-shadow: 0 2px 10px rgba(52, 211, 153, 0.5);
             border-color: rgba(110, 231, 183, 0.95);
             transform: translateY(-1px);
         }
@@ -64,9 +64,9 @@
         }
 
         .magic-card.uncollected {
-            opacity: 0.24;
-            background: rgba(5, 36, 24, 0.65);
-            border: 1px dashed rgba(52, 211, 153, 0.35);
+            opacity: 0.28;
+            background: rgba(5, 36, 24, 0.7);
+            border: 1px dashed rgba(52, 211, 153, 0.4);
             filter: grayscale(0.85);
         }
 
@@ -126,28 +126,15 @@
         .joker-pulse {
             animation: jokerBorderPulse 2s infinite ease-in-out;
         }
-
-        /* 恐龍探險隊員階級徽章閃耀效果 */
-        @keyframes rankShine {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-        .rank-gradient {
-            background: linear-gradient(270deg, #10b981, #f59e0b, #06b6d4, #10b981);
-            background-size: 300% 300%;
-            animation: rankShine 5s ease infinite;
-        }
     </style>
 </head>
 <body class="min-h-screen relative flex flex-col justify-between selection:bg-emerald-500 selection:text-white pb-6">
 
-    <!-- 背景叢林微粒地層畫布 -->
+    <!-- 背景叢林微粒畫布 -->
     <canvas id="stardust-canvas" class="fixed inset-0 pointer-events-none z-0"></canvas>
 
     <div class="relative z-10 max-w-5xl mx-auto px-2 sm:px-4 py-2 sm:py-4 w-full">
 
-        <!-- 頁面頂部：恐龍探險隊全景標題與雲端存檔狀態列 -->
         <header class="flex flex-col sm:flex-row items-center justify-between gap-2 mb-3">
             <div class="flex items-center gap-2">
                 <div class="w-8 h-8 rounded-xl bg-emerald-900/90 border border-emerald-400/50 flex items-center justify-center text-lg shadow-md">
@@ -163,20 +150,17 @@
 
             <!-- 音效開關與隊員階級進度徽章 -->
             <div class="flex items-center gap-2 flex-wrap justify-end">
-                <!-- 探險隊員階級 -->
                 <div class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-emerald-950/90 border border-emerald-500/40 text-[11px] text-emerald-200">
                     <span>🎖️</span>
                     <span>探險階級：</span>
                     <span id="expedition-rank-badge" class="font-bold text-amber-300">初階實習隊員</span>
                 </div>
 
-                <!-- 雲端存檔狀態標籤 -->
                 <div id="storage-status-badge" class="text-[10px] text-amber-200 bg-amber-950/80 px-2 py-1 rounded-xl border border-amber-400/50">
                     ✦ 探勘進度已連線
                 </div>
 
-                <!-- 探險音效開關 -->
-                <button id="btn-toggle-sound" class="p-1.5 rounded-xl bg-emerald-950 border border-emerald-500/40 text-emerald-300 hover:text-white transition flex items-center gap-1 text-xs" title="切換探險雷達音效">
+                <button id="btn-toggle-sound" class="p-1.5 rounded-xl bg-emerald-950 border border-emerald-500/40 text-emerald-300 hover:text-white transition flex items-center gap-1 text-xs" title="切換探險音效">
                     <span id="sound-icon">🔊</span>
                 </button>
             </div>
@@ -184,7 +168,6 @@
 
         <!-- 最上方：恐龍化石圖鑑挖掘地圖（2x2 四宮格 + 頂部鬼牌展架） -->
         <main class="glass-panel rounded-2xl p-2.5 sm:p-4 mb-3 sm:mb-4 shadow-2xl">
-            <!-- 全景標題與目標狀態列 -->
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-2 mb-2 border-b border-emerald-500/20 gap-2">
                 <div class="flex items-center gap-1.5 shrink-0">
                     <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
@@ -195,13 +178,13 @@
                 </div>
 
                 <div class="flex items-center gap-2 flex-wrap w-full sm:w-auto justify-between sm:justify-end">
-                    <!-- 鬼牌專屬頂部微型展架 -->
+                    <!-- 鬼牌專屬頂部展架 -->
                     <div class="flex items-center gap-1.5 bg-emerald-950/90 border border-amber-400/60 rounded-xl px-2.5 py-1 shrink-0" id="row-jokers">
                         <span class="text-xs sm:text-sm">👑</span>
                         <span class="text-[10px] sm:text-xs font-bold text-amber-200 whitespace-nowrap">鬼牌：</span>
                         <span id="jokers-count-badge" class="text-[10px] sm:text-xs px-1.5 py-0.5 rounded bg-emerald-900/90 text-amber-300 font-mono font-bold whitespace-nowrap">0 / 2</span>
                         <div class="flex gap-1 ml-1 items-center" id="jokers-slot-container">
-                            <!-- 火焰霸王龍與暗影迅猛龍卡槽動態放置此處 -->
+                            <!-- 火焰霸王龍與暗影迅猛龍卡槽 -->
                         </div>
                     </div>
 
@@ -212,7 +195,7 @@
                 </div>
             </div>
 
-            <!-- 四宮格 (手機與電腦皆為 2x2) -->
+            <!-- 四宮格 (2x2) -->
             <div class="grid grid-cols-2 gap-2 sm:gap-3" id="suits-board">
                 
                 <!-- 1. 黑桃：暴龍 -->
@@ -281,7 +264,7 @@
         <!-- 下方：探險挖掘台與出土特寫展示 -->
         <section class="grid grid-cols-1 md:grid-cols-3 gap-3">
             
-            <!-- 左側 2 欄：挖掘操作控制核心 -->
+            <!-- 左側 2 欄：挖掘操作核心 -->
             <div class="md:col-span-2 flex flex-col gap-3">
                 <div class="glass-panel rounded-2xl p-3 sm:p-4 shadow-xl">
                     
@@ -371,11 +354,11 @@
 
                 </div>
 
-                <!-- 探險隊長通訊欄（分成清晰兩行且完整顯示） -->
+                <!-- 探險隊長通訊欄（分成兩行清晰完整顯示） -->
                 <div class="glass-panel rounded-2xl p-2.5 sm:p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
                     <div class="flex items-start gap-2.5 w-full min-w-0">
                         <span class="text-xl sm:text-2xl shrink-0 mt-0.5">🦖</span>
-                        <div id="witch-message" class="text-xs sm:text-sm text-emerald-100 flex-1 leading-snug">
+                        <div id="witch-message" class="text-xs sm:text-sm text-emerald-100 flex-1 leading-snug break-words">
                             <div class="font-bold text-amber-300 text-xs sm:text-sm mb-0.5">探險隊員請注意！</div>
                             <div class="text-emerald-200/90 text-[11px] sm:text-xs">為圖鑑湊齊任一花色（黑桃、愛心、方塊、梅花）的 13 張同花順吧！</div>
                         </div>
@@ -434,7 +417,7 @@
 
     </div>
 
-    <!-- 自製重置確認視窗 (完全不使用 alert/confirm) -->
+    <!-- 自製重置確認視窗 (無 alert/confirm) -->
     <div id="reset-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 hidden">
         <div class="glass-panel max-w-sm w-full rounded-2xl p-4 sm:p-5 text-center border-2 border-amber-400/50 shadow-2xl transform transition-all scale-95" id="reset-modal-box">
             <div class="w-12 h-12 mx-auto rounded-full bg-emerald-900/90 border border-amber-400/50 flex items-center justify-center text-2xl mb-3 shadow-inner">
@@ -455,21 +438,111 @@
         </div>
     </div>
 
-    <!-- 雲端與應用邏輯整合 -->
+    <script>
+        const STORAGE_KEY = 'dino_card_deck_state_v4';
+        const DB_NAME = 'DinoExpeditionDB_v4';
+        const STORE_NAME = 'expedition_store';
+        const DB_VERSION = 1;
+
+        // 本地永久持久化管理器（容納 IndexedDB 與 localStorage 雙備援）
+        window.LocalDBCache = {
+            db: null,
+            init() {
+                return new Promise((resolve) => {
+                    try {
+                        const req = indexedDB.open(DB_NAME, DB_VERSION);
+                        req.onupgradeneeded = (e) => {
+                            const db = e.target.result;
+                            if (!db.objectStoreNames.contains(STORE_NAME)) {
+                                db.createObjectStore(STORE_NAME);
+                            }
+                        };
+                        req.onsuccess = (e) => {
+                            this.db = e.target.result;
+                            resolve(this.db);
+                        };
+                        req.onerror = () => resolve(null);
+                    } catch (e) {
+                        resolve(null);
+                    }
+                });
+            },
+            async save(key, data) {
+                // 同步寫入 localStorage 作為即時備援
+                try {
+                    localStorage.setItem(key, JSON.stringify(data));
+                } catch (e) {}
+
+                if (!this.db) await this.init();
+                if (!this.db) return false;
+                return new Promise((resolve) => {
+                    try {
+                        const tx = this.db.transaction(STORE_NAME, 'readwrite');
+                        const store = tx.objectStore(STORE_NAME);
+                        store.put(data, key);
+                        tx.oncomplete = () => resolve(true);
+                        tx.onerror = () => resolve(false);
+                    } catch (e) {
+                        resolve(false);
+                    }
+                });
+            },
+            async get(key) {
+                // 優先從 localStorage 獲取同步狀態以實現毫秒載入
+                try {
+                    const localRaw = localStorage.getItem(key);
+                    if (localRaw) {
+                        return JSON.parse(localRaw);
+                    }
+                } catch (e) {}
+
+                if (!this.db) await this.init();
+                if (!this.db) return null;
+                return new Promise((resolve) => {
+                    try {
+                        const tx = this.db.transaction(STORE_NAME, 'readonly');
+                        const store = tx.objectStore(STORE_NAME);
+                        const req = store.get(key);
+                        req.onsuccess = () => resolve(req.result || null);
+                        req.onerror = () => resolve(null);
+                    } catch (e) {
+                        resolve(null);
+                    }
+                });
+            },
+            async clear(key) {
+                try {
+                    localStorage.removeItem(key);
+                } catch (e) {}
+
+                if (!this.db) await this.init();
+                if (!this.db) return;
+                try {
+                    const tx = this.db.transaction(STORE_NAME, 'readwrite');
+                    tx.objectStore(STORE_NAME).delete(key);
+                } catch (e) {}
+            }
+        };
+    </script>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // 雲端儲存控制器
         window.CloudSync = {
             isReady: false,
             userDocRef: null,
+            userId: null,
             async init() {
                 try {
                     const appId = typeof __app_id !== 'undefined' ? __app_id : 'dino-flush-expedition-2026';
-                    if (typeof __firebase_config === 'undefined') {
-                        console.warn('Firebase 設定未提供，啟動本地記憶模式。');
+                    if (typeof __firebase_config === 'undefined' || !__firebase_config) {
+                        const badge = document.getElementById('storage-status-badge');
+                        if (badge) {
+                            badge.textContent = '✦ 本地記憶已永久鎖定';
+                            badge.className = 'text-[10px] text-emerald-200 bg-emerald-950/80 px-2 py-1 rounded-xl border border-emerald-400/50';
+                        }
                         return;
                     }
                     const firebaseConfig = JSON.parse(__firebase_config);
@@ -486,11 +559,10 @@
                     const user = auth.currentUser;
                     if (!user) return;
 
-                    const userId = user.uid;
-                    this.userDocRef = doc(db, 'artifacts', appId, 'users', userId, 'gameData', 'progress');
+                    this.userId = user.uid;
+                    this.userDocRef = doc(db, 'artifacts', appId, 'users', this.userId, 'gameData', 'progress');
                     this.isReady = true;
 
-                    // 雲端即時同步監聽
                     onSnapshot(this.userDocRef, (snap) => {
                         if (snap.exists()) {
                             const data = snap.data();
@@ -499,7 +571,7 @@
                             }
                         }
                     }, (err) => {
-                        console.warn('雲端監聽回報：', err);
+                        console.warn('雲端同步監聽回報：', err);
                     });
 
                     const badge = document.getElementById('storage-status-badge');
@@ -508,7 +580,11 @@
                         badge.className = 'text-[10px] text-amber-200 bg-amber-950/80 px-2 py-1 rounded-xl border border-amber-400/50';
                     }
                 } catch (e) {
-                    console.warn('雲端連線失敗，自動啟用本地快取備份：', e);
+                    console.warn('雲端模組備援啟動：', e);
+                    const badge = document.getElementById('storage-status-badge');
+                    if (badge) {
+                        badge.textContent = '✦ 本地記憶已永久鎖定';
+                    }
                 }
             },
             async save(data) {
@@ -530,13 +606,10 @@
             }
         };
 
-        // 啟動雲端連線
         window.CloudSync.init();
     </script>
 
-    <!-- 主程式邏輯與恐龍探險音效引擎 -->
     <script>
-        // 音效引擎（使用 Tone.js 即時合成，無須外部音效檔案）
         let soundEnabled = true;
         let audioSynth = null;
         let celebrationSynth = null;
@@ -557,14 +630,14 @@
                     celebrationSynth.volume.value = -6;
                 }
             } catch (err) {
-                console.warn('音訊引擎初始化跳過：', err);
+                console.warn('音訊初始化略過：', err);
             }
         }
 
         function playSound(type) {
             if (!soundEnabled) return;
             try {
-                if (Tone.context.state !== 'running') {
+                if (Tone && Tone.context && Tone.context.state !== 'running') {
                     Tone.start();
                 }
                 initAudio();
@@ -583,9 +656,7 @@
                 } else if (type === 'warning') {
                     audioSynth.triggerAttackRelease(["F#3", "D3"], "16n", now);
                 }
-            } catch (e) {
-                // 音訊忽略處理
-            }
+            } catch (e) {}
         }
 
         const btnToggleSound = document.getElementById('btn-toggle-sound');
@@ -624,13 +695,13 @@
             { value: 13, label: 'K' }
         ];
 
-        // 鬼牌配置（紅鬼牌、黑鬼牌）
+        // 鬼牌配置
         const JOKERS_CONFIG = [
             { id: 'jokers-red', key: 'jokers', name: '火焰霸王龍（紅鬼牌）', symbol: '👑', icon: '🦖🔥', label: '✦', color: 'text-rose-400', title: '火焰霸王龍（紅鬼牌）', short: '火霸' },
             { id: 'jokers-black', key: 'jokers', name: '暗影迅猛龍（黑鬼牌）', symbol: '👑', icon: '⚡🦖', label: '✦', color: 'text-emerald-300', title: '暗影迅猛龍（黑鬼牌）', short: '暗迅' }
         ];
 
-        // 建立完整 54 張恐龍牌庫
+        // 完整 54 張恐龍牌庫
         const FULL_DECK = [];
         SUITS_CONFIG.forEach(s => {
             RANKS_CONFIG.forEach(r => {
@@ -665,14 +736,14 @@
             });
         });
 
-        // 應用全域狀態
+        // 應用狀態
         let drawnCardIds = new Set();
         let currentSuitSelect = 'spades';
         let latestCard = null;
         let bonusDrawCount = 0;
         let isCelebrating = false;
 
-        // DOM 元素快取
+        // DOM 元素引用
         const rankSelector = document.getElementById('rank-selector');
         const rankLabel = document.getElementById('rank-label');
         const suitBtns = document.querySelectorAll('.suit-btn');
@@ -1073,7 +1144,7 @@
             }
         }
 
-        // 重置 Modal
+        // 重置 Modal 控制
         btnRequestReset.addEventListener('click', () => {
             resetModal.classList.remove('hidden');
         });
@@ -1087,7 +1158,7 @@
             resetGame();
         });
 
-        // 完整重置邏輯
+        // 重置所有遊戲進度
         function resetGame() {
             drawnCardIds.clear();
             latestCard = null;
@@ -1126,10 +1197,8 @@
             saveGameState();
         }
 
-        const STORAGE_KEY = 'dino_card_deck_state_v2';
-
-        // 儲存進度（本地快取與雲端同步）
-        function saveGameState() {
+        // 儲存進度（雙重保險：本地持久儲存 + 雲端即時同步）
+        async function saveGameState() {
             const payload = {
                 drawnCardIds: Array.from(drawnCardIds),
                 latestCardId: latestCard ? latestCard.id : null,
@@ -1138,18 +1207,18 @@
                 selectedRankVal: rankSelector.value || null
             };
 
-            try {
-                sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-            } catch (e) {
-                console.warn('本地快取警告：', e);
+            // 1. 本地永久保存
+            if (window.LocalDBCache) {
+                await window.LocalDBCache.save(STORAGE_KEY, payload);
             }
 
+            // 2. 雲端同步
             if (window.CloudSync && window.CloudSync.isReady) {
                 window.CloudSync.save(payload);
             }
         }
 
-        // 載入進度
+        // 載入進度並更新整體介面
         function applyStateData(state) {
             if (!state) return;
             if (Array.isArray(state.drawnCardIds)) {
@@ -1186,19 +1255,21 @@
             applyStateData(data);
         };
 
-        function loadLocalState() {
+        // 載入永久狀態
+        async function loadPersistentState() {
             try {
-                const raw = sessionStorage.getItem(STORAGE_KEY);
-                if (raw) {
-                    const state = JSON.parse(raw);
-                    applyStateData(state);
+                if (window.LocalDBCache) {
+                    const cached = await window.LocalDBCache.get(STORAGE_KEY);
+                    if (cached) {
+                        applyStateData(cached);
+                    }
                 }
             } catch (e) {
-                console.warn('本地載入警告：', e);
+                console.warn('記憶讀取警告：', e);
             }
         }
 
-        // 遠古叢林孢子背景微粒
+        // 遠古叢林微粒畫布
         const canvas = document.getElementById('stardust-canvas');
         const ctx = canvas.getContext('2d');
         let spores = [];
@@ -1243,11 +1314,12 @@
 
         window.addEventListener('resize', resizeCanvas);
 
-        window.onload = function() {
+        // 確保視窗載入後即時初始化地圖與卡槽
+        window.onload = async function() {
             resizeCanvas();
             animateSpores();
             initCardGrids();
-            loadLocalState();
+            await loadPersistentState();
             updateBoardUI();
             checkFlushGoal();
             updateExpeditionRank();
